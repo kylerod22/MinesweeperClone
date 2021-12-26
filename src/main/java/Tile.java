@@ -27,7 +27,7 @@ public class Tile {
     }
 
 
-    private int findBombsNear() {
+    public int findBombsNear() {
         int bombCtr = 0;
         for (int i = -1; i <= 1; i++) {
             for (int j = -1; j <= 1; j++) {
@@ -40,7 +40,7 @@ public class Tile {
         return bombCtr;
     }
 
-    public boolean checkCoordsExist(int row, int col) {
+    private boolean checkCoordsExist(int row, int col) {
         return (row >= 0 && row < Game.HEIGHT && col >= 0 && col < Game.WIDTH);
     }
 }
