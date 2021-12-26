@@ -8,15 +8,16 @@ import java.util.Random;
 
 public class GamePanel extends JPanel implements Runnable {
     private final int pixelSize = 16;
-    private final int scale = 3;
+    private final int scale = 4;
     private final int screenWidth = scale * pixelSize * Game.WIDTH;
     private final int screenHeight = scale * pixelSize * Game.HEIGHT;
 
     MouseHandler mouseHandler = new MouseHandler();
+    boolean lastLeftMouseState, lastRightMouseState;
 
     Thread gameThread;
 
-    private final int numBombs = (Game.WIDTH * Game.HEIGHT) / 5;
+    private final int numBombs = (Game.WIDTH * Game.HEIGHT) / 15;
     public static Tile[][] board;
     int mouseRow = -1, mouseCol = -1;
     boolean foundBomb = false, completedBoard = false;
@@ -39,12 +40,12 @@ public class GamePanel extends JPanel implements Runnable {
     @Override
     public void run() {
         initBoard();
-
+        int revealedTiles = 0;
         boolean runGame = true;
         print();
         while (!foundBomb && !completedBoard) {
-            boolean lastLeftMouseState = mouseHandler.leftMouseClicked;
-            boolean lastRightMouseState = mouseHandler.rightMouseClicked;
+            lastLeftMouseState = mouseHandler.leftMouseClicked;
+            lastRightMouseState = mouseHandler.rightMouseClicked;
             try {
                 Thread.sleep(0);
             } catch (InterruptedException e) {
@@ -56,8 +57,9 @@ public class GamePanel extends JPanel implements Runnable {
             }
             if (mouseRow >= 0 && mouseCol >= 0 && lastLeftMouseState && !mouseHandler.leftMouseClicked) {
                 Tile clickedTile = board[mouseRow][mouseCol];
-                if (!clickedTile.flagged) {
+                if (!clickedTile.flagged && !clickedTile.revealed) {
                     clickedTile.reveal();
+                    revealedTiles++;
                     if (clickedTile.isBomb) foundBomb = true;
                 }
                 mouseRow = -1;
@@ -72,8 +74,13 @@ public class GamePanel extends JPanel implements Runnable {
                 mouseCol = -1;
                 repaint();
             }
+            completedBoard = (revealedTiles == (Game.HEIGHT * Game.WIDTH) - numBombs);
         }
-        System.out.println("GAME OVER");
+        if (foundBomb) {
+            System.out.println("GAME OVER!");
+        } else {
+            System.out.println("YOU WIN!");
+        }
     }
 
     public void paintComponent(Graphics g) {
@@ -82,6 +89,8 @@ public class GamePanel extends JPanel implements Runnable {
         BufferedImage image;
 
         if (board == null) return;
+
+
         for (int i = 0; i < Game.HEIGHT; i++) {
             for (int j = 0; j < Game.WIDTH; j++) {
                 Tile currTile = board[i][j];
@@ -90,17 +99,20 @@ public class GamePanel extends JPanel implements Runnable {
                 if (currTile.flagged) {
                     image = getImage("/gameRes/flag.png");
                     g2.drawImage(image, j * scale * pixelSize, i * scale * pixelSize, scale * pixelSize, scale * pixelSize, null);
-                } /*else if (currTile.revealed) {
+                } else if (currTile.revealed) {
+                    image = getImage("/gameRes/revealedTile.png");
+                    g2.drawImage(image, j * scale * pixelSize, i * scale * pixelSize, scale * pixelSize, scale * pixelSize, null);
+                }
 
-                } */
             }
         }
+        //TODO: Implement pressedTile.png
 
         if (foundBomb) {
             image = getImage("/gameRes/bomb.png");
             for (int i = 0; i < Game.HEIGHT; i++) {
                 for (int j = 0; j < Game.WIDTH; j++) {
-                    if (board[i][j].isBomb) {
+                    if (board[i][j].isBomb && !board[i][j].flagged) {
                         g2.drawImage(image, j * scale * pixelSize, i * scale * pixelSize, scale * pixelSize, scale * pixelSize, null);
                     }
                 }
@@ -118,7 +130,7 @@ public class GamePanel extends JPanel implements Runnable {
         }
 
         int bombCtr = 0;
-        while (bombCtr <= numBombs) {
+        while (bombCtr < numBombs) {
             Random random = new Random();
             int randRow = random.nextInt(Game.HEIGHT);
             int randCol = random.nextInt(Game.WIDTH);
@@ -127,6 +139,16 @@ public class GamePanel extends JPanel implements Runnable {
                 bombCtr++;
             }
         }
+    }
+
+    public boolean checkForCompleteBoard() {
+        for (int i = 0; i < Game.HEIGHT; i++) {
+            for (int j = 0; j < Game.WIDTH; j++) {
+                Tile currTile = board[i][j];
+                if (!currTile.isBomb && !currTile.revealed) return false;
+            }
+        }
+        return true;
     }
 
     public BufferedImage getImage(String resPath) {
