@@ -102,6 +102,10 @@ public class GamePanel extends JPanel implements Runnable {
                 } else if (currTile.revealed) {
                     image = getImage("/gameRes/revealedTile.png");
                     g2.drawImage(image, j * scale * pixelSize, i * scale * pixelSize, scale * pixelSize, scale * pixelSize, null);
+                    if (currTile.findBombsNear() > 0) {
+                        image = getImage("/gameRes/" + currTile.findBombsNear() + ".png");
+                        g2.drawImage(image, j * scale * pixelSize, i * scale * pixelSize, scale * pixelSize, scale * pixelSize, null);
+                    }
                 }
 
             }
