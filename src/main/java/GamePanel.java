@@ -59,7 +59,7 @@ public class GamePanel extends JPanel implements Runnable {
                 if (!clickedTile.flagged && !clickedTile.revealed) {
                     clickedTile.reveal();
                     revealedTiles++;
-                    if (clickedTile.findBombsNear() == 0) revealAdjacentEmptyTiles(mouseRow, mouseCol);
+                    if (clickedTile.findBombsNear() == 0 && !clickedTile.isBomb) revealAdjacentEmptyTiles(mouseRow, mouseCol);
                     if (clickedTile.isBomb) foundBomb = true;
                 }
                 mouseRow = -1;
@@ -69,7 +69,7 @@ public class GamePanel extends JPanel implements Runnable {
 
             if (mouseRow >= 0 && mouseCol >= 0 && !lastRightMouseState && mouseHandler.rightMouseClicked) {
                 Tile clickedTile = board[mouseRow][mouseCol];
-                clickedTile.changeFlagState();
+                if (!clickedTile.revealed) clickedTile.changeFlagState();
                 mouseRow = -1;
                 mouseCol = -1;
                 repaint();
@@ -148,7 +148,7 @@ public class GamePanel extends JPanel implements Runnable {
                 if (checkCoordsExist(row + i, col + j)) {
                     Tile currTile = board[row + i][col + j];
                     if (!currTile.revealed && !currTile.isBomb) {
-                        currTile.reveal();
+                        if (!currTile.flagged) currTile.reveal();
                         revealedTiles++;
                         if (currTile.findBombsNear() == 0) revealAdjacentEmptyTiles(row + i, col + j);
                     }
