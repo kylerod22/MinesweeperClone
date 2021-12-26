@@ -17,9 +17,10 @@ public class GamePanel extends JPanel implements Runnable {
 
     Thread gameThread;
 
-    private final int numBombs = (Game.WIDTH * Game.HEIGHT) / 15;
+    private final int numBombs = (Game.WIDTH * Game.HEIGHT) / 5;
     public static Tile[][] board;
     int mouseRow = -1, mouseCol = -1;
+    int revealedTiles = 0;
     boolean foundBomb = false, completedBoard = false;
 
     final Color[] colors = {Color.RED, Color.ORANGE, Color.YELLOW, Color.GREEN, Color.BLUE, Color.CYAN, Color.MAGENTA, Color.MAGENTA};
@@ -40,8 +41,6 @@ public class GamePanel extends JPanel implements Runnable {
     @Override
     public void run() {
         initBoard();
-        int revealedTiles = 0;
-        boolean runGame = true;
         print();
         while (!foundBomb && !completedBoard) {
             lastLeftMouseState = mouseHandler.leftMouseClicked;
@@ -60,6 +59,7 @@ public class GamePanel extends JPanel implements Runnable {
                 if (!clickedTile.flagged && !clickedTile.revealed) {
                     clickedTile.reveal();
                     revealedTiles++;
+                    if (clickedTile.findBombsNear() == 0) revealAdjacentEmptyTiles(mouseRow, mouseCol);
                     if (clickedTile.isBomb) foundBomb = true;
                 }
                 mouseRow = -1;
@@ -141,15 +141,26 @@ public class GamePanel extends JPanel implements Runnable {
         }
     }
 
-    public boolean checkForCompleteBoard() {
-        for (int i = 0; i < Game.HEIGHT; i++) {
-            for (int j = 0; j < Game.WIDTH; j++) {
-                Tile currTile = board[i][j];
-                if (!currTile.isBomb && !currTile.revealed) return false;
+    public void revealAdjacentEmptyTiles(int row, int col) {
+        for (int i = -1; i <= 1; i++) {
+            for (int j = -1; j <= 1; j++) {
+                if (i == 0 && j == 0) continue;
+                if (checkCoordsExist(row + i, col + j)) {
+                    Tile currTile = board[row + i][col + j];
+                    if (!currTile.revealed && !currTile.isBomb) {
+                        currTile.reveal();
+                        revealedTiles++;
+                        if (currTile.findBombsNear() == 0) revealAdjacentEmptyTiles(row + i, col + j);
+                    }
+                }
             }
         }
-        return true;
     }
+
+    public boolean checkCoordsExist(int row, int col) {
+        return (row >= 0 && row < Game.HEIGHT && col >= 0 && col < Game.WIDTH);
+    }
+
 
     public BufferedImage getImage(String resPath) {
         BufferedImage image = null;
