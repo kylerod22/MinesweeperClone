@@ -12,15 +12,12 @@ public class Tile {
     }
 
 
-    public int reveal() {
+    public void reveal() {
         revealed = true;
         bombsNear = findBombsNear();
-        return bombsNear;
     }
 
-    public void flag() {
-        flagged = true;
-    }
+    public void changeFlagState() {flagged = !flagged;}
 
     public void setAsBomb() {
         isBomb = true;

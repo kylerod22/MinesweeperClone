@@ -8,7 +8,7 @@ import java.util.Random;
 
 public class GamePanel extends JPanel implements Runnable {
     private final int pixelSize = 16;
-    private final int scale = 2;
+    private final int scale = 3;
     private final int screenWidth = scale * pixelSize * Game.WIDTH;
     private final int screenHeight = scale * pixelSize * Game.HEIGHT;
 
@@ -19,9 +19,9 @@ public class GamePanel extends JPanel implements Runnable {
     private final int numBombs = (Game.WIDTH * Game.HEIGHT) / 5;
     public static Tile[][] board;
     int mouseRow = -1, mouseCol = -1;
-    int delayMillis = 10;
+    boolean foundBomb = false, completedBoard = false;
 
-    final Color[] colors = {Color.RED, Color.ORANGE, Color.YELLOW, Color.GREEN, Color.BLUE, Color.CYAN, Color.MAGENTA};
+    final Color[] colors = {Color.RED, Color.ORANGE, Color.YELLOW, Color.GREEN, Color.BLUE, Color.CYAN, Color.MAGENTA, Color.MAGENTA};
 
     public GamePanel() {
         this.setPreferredSize(new Dimension(screenWidth, screenHeight));
@@ -42,21 +42,35 @@ public class GamePanel extends JPanel implements Runnable {
 
         boolean runGame = true;
         print();
-        while (runGame) {
+        while (!foundBomb && !completedBoard) {
+            boolean lastLeftMouseState = mouseHandler.leftMouseClicked;
+            boolean lastRightMouseState = mouseHandler.rightMouseClicked;
             try {
-                Thread.sleep(delayMillis);
+                Thread.sleep(0);
             } catch (InterruptedException e) {
                 e.printStackTrace();
-            }
-            if (mouseHandler.leftMouseClicked) {
+            } //TODO: Find out why having a 0 Sleep Time makes the MouseListener work
+            if (mouseHandler.leftMouseClicked || mouseHandler.rightMouseClicked) {
                 mouseRow = mouseHandler.mouseY / scale / pixelSize;
                 mouseCol = mouseHandler.mouseX / scale / pixelSize;
             }
-            if (mouseRow >= 0 && mouseCol >= 0 && !mouseHandler.leftMouseClicked) {
+            if (mouseRow >= 0 && mouseCol >= 0 && lastLeftMouseState && !mouseHandler.leftMouseClicked) {
                 Tile clickedTile = board[mouseRow][mouseCol];
-                if (clickedTile.isBomb) runGame = false;
+                if (!clickedTile.flagged) {
+                    clickedTile.reveal();
+                    if (clickedTile.isBomb) foundBomb = true;
+                }
                 mouseRow = -1;
                 mouseCol = -1;
+                repaint();
+            }
+
+            if (mouseRow >= 0 && mouseCol >= 0 && !lastRightMouseState && mouseHandler.rightMouseClicked) {
+                Tile clickedTile = board[mouseRow][mouseCol];
+                clickedTile.changeFlagState();
+                mouseRow = -1;
+                mouseCol = -1;
+                repaint();
             }
         }
         System.out.println("GAME OVER");
@@ -65,18 +79,30 @@ public class GamePanel extends JPanel implements Runnable {
     public void paintComponent(Graphics g) {
         super.paintComponent(g);
         Graphics2D g2 = (Graphics2D) g;
-        BufferedImage image = null;
+        BufferedImage image;
 
         if (board == null) return;
         for (int i = 0; i < Game.HEIGHT; i++) {
             for (int j = 0; j < Game.WIDTH; j++) {
-                if (!board[i][j].revealed) {
-                    try {
-                        image = ImageIO.read(Objects.requireNonNull(getClass().getResourceAsStream("/gameRes/tile.png")));
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
+                Tile currTile = board[i][j];
+                image = getImage("/gameRes/tile.png");
+                g2.drawImage(image, j * scale * pixelSize, i * scale * pixelSize, scale * pixelSize, scale * pixelSize, null);
+                if (currTile.flagged) {
+                    image = getImage("/gameRes/flag.png");
                     g2.drawImage(image, j * scale * pixelSize, i * scale * pixelSize, scale * pixelSize, scale * pixelSize, null);
+                } /*else if (currTile.revealed) {
+
+                } */
+            }
+        }
+
+        if (foundBomb) {
+            image = getImage("/gameRes/bomb.png");
+            for (int i = 0; i < Game.HEIGHT; i++) {
+                for (int j = 0; j < Game.WIDTH; j++) {
+                    if (board[i][j].isBomb) {
+                        g2.drawImage(image, j * scale * pixelSize, i * scale * pixelSize, scale * pixelSize, scale * pixelSize, null);
+                    }
                 }
             }
         }
@@ -101,6 +127,16 @@ public class GamePanel extends JPanel implements Runnable {
                 bombCtr++;
             }
         }
+    }
+
+    public BufferedImage getImage(String resPath) {
+        BufferedImage image = null;
+        try {
+            image = ImageIO.read(Objects.requireNonNull(getClass().getResourceAsStream(resPath)));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return image;
     }
 
     public void print() {
