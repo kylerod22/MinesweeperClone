@@ -3,7 +3,7 @@ import javax.swing.*;
 public class Game {
 
     public final String NAME = "Minesweeper";
-    public static final int WIDTH = 10, HEIGHT = 10;
+    public static final int WIDTH = 7, HEIGHT = 7;
 
 
     public Game() {

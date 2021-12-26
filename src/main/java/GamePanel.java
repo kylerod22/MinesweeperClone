@@ -17,13 +17,11 @@ public class GamePanel extends JPanel implements Runnable {
 
     Thread gameThread;
 
-    private final int numBombs = (Game.WIDTH * Game.HEIGHT) / 5;
+    private final int numBombs = (Game.WIDTH * Game.HEIGHT) / 4;
     public static Tile[][] board;
     int mouseRow = -1, mouseCol = -1;
     int revealedTiles = 0;
     boolean foundBomb = false, completedBoard = false;
-
-    final Color[] colors = {Color.RED, Color.ORANGE, Color.YELLOW, Color.GREEN, Color.BLUE, Color.CYAN, Color.MAGENTA, Color.MAGENTA};
 
     public GamePanel() {
         this.setPreferredSize(new Dimension(screenWidth, screenHeight));
@@ -42,6 +40,7 @@ public class GamePanel extends JPanel implements Runnable {
     public void run() {
         initBoard();
         print();
+        int initTime = (int) System.currentTimeMillis();
         while (!foundBomb && !completedBoard) {
             lastLeftMouseState = mouseHandler.leftMouseClicked;
             lastRightMouseState = mouseHandler.rightMouseClicked;
@@ -80,6 +79,8 @@ public class GamePanel extends JPanel implements Runnable {
             System.out.println("GAME OVER!");
         } else {
             System.out.println("YOU WIN!");
+            int timeSeconds = ((int) System.currentTimeMillis() - initTime) / 1000;
+            System.out.println("Time: " + (timeSeconds / 60) + " Minutes, " + (timeSeconds % 60) + " Seconds!");
         }
     }
 
@@ -102,7 +103,7 @@ public class GamePanel extends JPanel implements Runnable {
                 } else if (currTile.revealed) {
                     image = getImage("/gameRes/revealedTile.png");
                     g2.drawImage(image, j * scale * pixelSize, i * scale * pixelSize, scale * pixelSize, scale * pixelSize, null);
-                    if (currTile.findBombsNear() > 0) {
+                    if (!currTile.isBomb && currTile.findBombsNear() > 0) {
                         image = getImage("/gameRes/" + currTile.findBombsNear() + ".png");
                         g2.drawImage(image, j * scale * pixelSize, i * scale * pixelSize, scale * pixelSize, scale * pixelSize, null);
                     }
