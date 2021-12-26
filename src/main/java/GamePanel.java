@@ -8,7 +8,7 @@ public class GamePanel extends JPanel implements Runnable {
     private final int screenWidth = scale * pixelSize * Game.WIDTH;
     private final int screenHeight = scale * pixelSize * Game.HEIGHT;
 
-    //KeyHandler keyHandler = new KeyHandler();
+    MouseHandler mouseHandler = new MouseHandler();
 
     Thread gameThread;
 
@@ -21,7 +21,7 @@ public class GamePanel extends JPanel implements Runnable {
         this.setPreferredSize(new Dimension(screenWidth, screenHeight));
         this.setBackground(Color.BLACK);
         this.setDoubleBuffered(true);
-        //this.addKeyListener(keyHandler);
+        this.addMouseListener(mouseHandler);
         this.setFocusable(true);
     }
 
